@@ -1,0 +1,6 @@
+torch>=2.4.0
+diffusers[torch]==0.32.0
+transformers==4.46.2
+Pillow
+gradio>=5.17.0
+matplotlib
