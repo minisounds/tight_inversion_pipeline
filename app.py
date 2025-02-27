@@ -1,3 +1,4 @@
+import spaces
 import gradio as gr
 import torch
 import random
@@ -55,6 +56,7 @@ pipe_inversion, pipe_inference = get_pipes(cfg, image_encoder=image_encoder, dev
 # pipe_inversion.cfg = cfg
 # pipe_inference.cfg = cfg
 
+@spaces.GPU
 def edit_demo(source_image, source_prompt, edit_prompt, ipa_scale, guidance_scale, sharpening_factor, use_negative_prompt):
     """
     Given a source image, a source prompt and an edit prompt, this function:
@@ -196,17 +198,17 @@ demo = gr.Interface(
         gr.Image(type="pil", label="Source Image"),
         gr.Textbox(lines=2, placeholder="Enter source prompt here", label="Source Prompt"),
         gr.Textbox(lines=2, placeholder="Enter edit prompt here", label="Edit Prompt"),
-        gr.Slider(minimum=0.1, maximum=1.0, step=0.05, value=0.4, label="IPA Scale"),
-        gr.Slider(minimum=1.0, maximum=20.0, step=0.1, value=7.5, label="Guidance Scale for Editing"),
-        gr.Slider(minimum=1.0, maximum=3.0, step=0.1, value=1.5, label="Sharpening Factor"),
-        gr.Checkbox(label="Use negative prompt", value=False),
+        gr.Slider(minimum=0.1, maximum=1.0, step=0.05, value=0.4, label="IPA Scale", info="Adjust to balance faithfulness and editability"),
+        gr.Slider(minimum=1.0, maximum=20.0, step=0.1, value=7.5, label="Guidance Scale", info="Adjust to control the strength of the edit"),
+        gr.Slider(minimum=1.0, maximum=3.0, step=0.1, value=1.5, label="Sharpening Factor", info="Makes CFG effects more localized"),
+        gr.Checkbox(label="Use negative prompt", value=False, info="Use the source prompt as a negative prompt for editing"),
     ],
     outputs=gr.Image(type="pil", label="Edited Image"),
     title="Tight Inversion SDXL Demo",
     description=(
         "Upload an image, provide a source prompt (for inversion) and an edit prompt, "
         "set the IPA scale (for both inversion and editing), the guidance scale for editing "
-        "(inversion guidance scale is fixed to 1), and the guidance scale sharpening factor (editing only), "
+        "and the guidance scale sharpening factor, "
         "then view the edited image. You can start with the provided examples."
     ),
     examples=[

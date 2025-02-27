@@ -4,3 +4,4 @@ transformers==4.46.2
 Pillow
 gradio>=5.17.0
 matplotlib
+spaces
