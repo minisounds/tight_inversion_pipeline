@@ -200,7 +200,7 @@ demo = gr.Interface(
         gr.Textbox(lines=2, placeholder="Enter edit prompt here", label="Edit Prompt"),
         gr.Slider(minimum=0.1, maximum=1.0, step=0.05, value=0.4, label="IPA Scale", info="Adjust to balance faithfulness and editability"),
         gr.Slider(minimum=1.0, maximum=20.0, step=0.1, value=7.5, label="Guidance Scale", info="Adjust to control the strength of the edit"),
-        gr.Slider(minimum=1.0, maximum=3.0, step=0.1, value=1.5, label="Sharpening Factor", info="Makes CFG effects more localized"),
+        gr.Slider(minimum=1.0, maximum=3.0, step=0.1, value=1.0, label="Sharpening Factor", info="Makes CFG effects more localized"),
         gr.Checkbox(label="Use negative prompt", value=False, info="Use the source prompt as a negative prompt for editing"),
     ],
     outputs=gr.Image(type="pil", label="Edited Image"),
