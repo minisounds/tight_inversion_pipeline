@@ -223,7 +223,7 @@ demo = gr.Interface(
         ["example_images/editAR_images/dog_forest.jpg", "a dog running in the forest", "a forest with no one around", 0.4, 7.5, 1.0, False],
         ["example_images/animals/0.jpg", "A photo of a gazelle", "A photo of a gazelle wearing a red hat", 0.4, 7.5, 1.5, False],
         # ["example_images/garibis_images/1.jpg", "white christmas tree", "christmas tree with red ornaments", 0.55, 7.5, 2.0, False],
-        ["example_images/people/5.jpg", "a person", "a person with a large thick beard", 0.5, 7.5, 2.0, True],
+        ["example_images/people/5.jpg", "a person", "a person with a large thick beard", 0.5, 7.5, 2.0, False],
         ["example_images/magic_brush/262283-input.png", "a lot of vases filled with lots of flowers", "a lot of vases filled with red roses", 0.4, 12, 1.4, True],
     ]
 )
