@@ -80,10 +80,6 @@ def edit_demo(source_image, source_prompt, edit_prompt, ipa_scale, guidance_scal
     if source_image is None:
         return None
 
-    # pipe_inversion, pipe_inference = get_pipes(cfg, image_encoder=image_encoder, device=device)
-    # pipe_inversion.cfg = cfg
-    # pipe_inference.cfg = cfg
-
     # Preprocess the source image: convert to RGB and crop/resize
     input_image = source_image.convert("RGB")
     model_size = model_type_to_size(cfg.model_type)  # e.g. (512, 512)
@@ -201,7 +197,7 @@ def edit_demo(source_image, source_prompt, edit_prompt, ipa_scale, guidance_scal
 
     return edited_image
 
-def main(): 
+def main():
     # Define IP-Adapter weights file for later loading - allows diffusion models to condition on images rather 
     # than just text prompts 
     weight_name = "ip-adapter-plus_sdxl_vit-h.safetensors"
@@ -211,7 +207,7 @@ def main():
     source_image = Image.open("juliana.jpg")
     source_prompt = "a girl in a red coat looks into the distance"
     edit_prompt = "a girl with a red hat"
-    ipa_scale = 0.7
+    ipa_scale = 0.8
     guidance_scale = 5
     sharpening_factor = 1.0
     use_negative_prompt = False
