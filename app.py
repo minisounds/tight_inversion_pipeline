@@ -1,5 +1,3 @@
-import spaces
-import gradio as gr
 import torch
 import random
 import numpy as np
@@ -53,10 +51,7 @@ if cfg.inference_use_ipa:
 
 # Get both inversion and inference (editing) pipelines.
 pipe_inversion, pipe_inference = get_pipes(cfg, image_encoder=image_encoder, device=device)
-# pipe_inversion.cfg = cfg
-# pipe_inference.cfg = cfg
 
-@spaces.GPU
 def edit_demo(source_image, source_prompt, edit_prompt, ipa_scale, guidance_scale, sharpening_factor, use_negative_prompt):
     """
     Given a source image, a source prompt and an edit prompt, this function:
@@ -191,42 +186,25 @@ def edit_demo(source_image, source_prompt, edit_prompt, ipa_scale, guidance_scal
 
     return edited_image
 
-# Build Gradio Interface with additional inputs for IPA scale, guidance scale, and sharpening factor.
-demo = gr.Interface(
-    fn=edit_demo,
-    inputs=[
-        gr.Image(type="pil", label="Source Image"),
-        gr.Textbox(lines=2, placeholder="Enter source prompt here", label="Source Prompt"),
-        gr.Textbox(lines=2, placeholder="Enter edit prompt here", label="Edit Prompt"),
-        gr.Slider(minimum=0.1, maximum=1.0, step=0.05, value=0.4, label="IPA Scale", info="Adjust to balance faithfulness and editability"),
-        gr.Slider(minimum=1.0, maximum=20.0, step=0.1, value=7.5, label="Guidance Scale", info="Adjust to control the strength of the edit"),
-        gr.Slider(minimum=1.0, maximum=3.0, step=0.1, value=1.0, label="Sharpening Factor", info="Makes CFG effects more localized"),
-        gr.Checkbox(label="Use negative prompt", value=False, info="Use the source prompt as a negative prompt for editing"),
-    ],
-    outputs=gr.Image(type="pil", label="Edited Image"),
-    title="Tight Inversion SDXL Demo",
-    description=(
-        "Upload an image, provide a source prompt (for inversion) and an edit prompt, "
-        "set the IPA scale (for both inversion and editing), the guidance scale for editing "
-        "and the guidance scale sharpening factor, "
-        "then view the edited image. You can start with the provided examples."
-    ),
-    examples=[
-        # Example template:
-        # ["path/to/example_image.jpg", "A sunny landscape", "A stormy night", 0.4, 7.5, 1.5],
-        # Add more examples here.
-        ["example_images/animals/7.jpg", "A photo of a husky", "A photo of a cat", 0.4, 7.5, 1.0, False],
-        ["example_images/tests/diner_square.png", "a photo of people dining in a diner", "a photo of robots dining in a diner", 0.4, 7.5, 1.0, True],
-        ["example_images/tests/lion.jpg", "a lion in the field", "a lion made of lego in the field", 0.4, 7.5, 1.0, True],
-        ["example_images/garibis_images/5.jpg", "metal elephant statues", "real living elephants", 0.3, 4.0, 1.0, True],
-        # ["example_images/tests/monkey.jpg", "a photo of a monkey sitting on a branch in the forest", "a photo of a beaver sitting on a branch in the forest", 0.7, 12, 1.5, False],
-        ["example_images/editAR_images/dog_forest.jpg", "a dog running in the forest", "a forest with no one around", 0.4, 7.5, 1.0, False],
-        ["example_images/animals/0.jpg", "A photo of a gazelle", "A photo of a gazelle wearing a red hat", 0.4, 7.5, 1.5, False],
-        # ["example_images/garibis_images/1.jpg", "white christmas tree", "christmas tree with red ornaments", 0.55, 7.5, 2.0, False],
-        ["example_images/people/5.jpg", "a person", "a person with a large thick beard", 0.5, 7.5, 2.0, False],
-        ["example_images/magic_brush/262283-input.png", "a lot of vases filled with lots of flowers", "a lot of vases filled with red roses", 0.4, 12, 1.4, True],
-    ]
+# Your custom inputs
+source_image = Image.open("juliana.jpg")
+source_prompt = "a girl in a red coat looks into the distance"
+edit_prompt = "a girl with a red hat"
+ipa_scale = 0.4
+guidance_scale = 7.5
+sharpening_factor = 1.0
+use_negative_prompt = False
+
+# Call the edit function directly
+result_image = edit_demo(
+    source_image, 
+    source_prompt, 
+    edit_prompt, 
+    ipa_scale, 
+    guidance_scale, 
+    sharpening_factor, 
+    use_negative_prompt
 )
 
-if __name__ == "__main__":
-    demo.launch()
+# Save or display the result
+result_image.save("output_edited_image.jpg")
