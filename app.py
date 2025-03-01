@@ -15,10 +15,7 @@ from src.enums import Model_Type, Scheduler_Type
 from src.utils.enums_utils import get_pipes, is_stochastic, model_type_to_size
 from src.utils.images_utils import crop_center_square_and_resize
 
-# Use the same weight name as in your code
-weight_name = "ip-adapter-plus_sdxl_vit-h.safetensors"
-
-# A helper to create noise (duplicated from your code)
+# Noise List Helper Function
 def create_noise_list(model_type, length, dtype, generator=None):
     img_size = model_type_to_size(model_type)
     VQAE_SCALE = 8
@@ -26,33 +23,51 @@ def create_noise_list(model_type, length, dtype, generator=None):
     device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
     return [randn_tensor(latents_size, dtype=dtype, device=device, generator=generator) for i in range(length)]
 
-config_path = "configs/run_configs/ddim/ddim_ipa_scale_0.4.yaml"
-with open(config_path, 'r') as file:
-    cfg = RunConfig.from_yaml(yaml.safe_load(file))
 
-# Set device and seed
-device = "cuda" if torch.cuda.is_available() else "cpu"
-seed = cfg.seed if cfg.seed is not None else 42
-torch.manual_seed(seed)
-random.seed(seed)
-np.random.seed(seed)
+def setup_env(config_path="configs/run_configs/ddim/ddim_ipa_scale_0.4.yaml", seed=42): 
+    """
+    Set up the environment for Tight Inversion, including loading configurations,
+    setting up device, seeds, and loading necessary models.
+    
+    Args:
+        config_path (str): Path to the configuration file
+        custom_seed (int, optional): Override seed from config if provided
+        
+    Returns:
+        tuple: (config, pipe_inversion, pipe_inference, device, dtype)
+    """
+    
+    with open(config_path, 'r') as file:
+        cfg = RunConfig.from_yaml(yaml.safe_load(file))
 
-# Set torch dtype based on config
-dtype = torch.float32 if cfg.use_float32 else torch.bfloat16
+    # Set device
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    
+    seed = cfg.seed if cfg.seed is not None else 42
+    torch.manual_seed(seed)
+    random.seed(seed)
+    np.random.seed(seed)
 
-# Load image encoder if using IP-Adapter
-image_encoder = None
-if cfg.inference_use_ipa:
-    image_encoder = CLIPVisionModelWithProjection.from_pretrained(
-        "h94/IP-Adapter",
-        subfolder="models/image_encoder",
-        torch_dtype=dtype,
-    ).to(device)
+    # Set torch dtype based on config
+    dtype = torch.float32 if cfg.use_float32 else torch.bfloat16
 
-# Get both inversion and inference (editing) pipelines.
-pipe_inversion, pipe_inference = get_pipes(cfg, image_encoder=image_encoder, device=device)
+    # Load image encoder if using IP-Adapter
+    image_encoder = None
+    if cfg.inference_use_ipa:
+        image_encoder = CLIPVisionModelWithProjection.from_pretrained(
+            "h94/IP-Adapter",
+            subfolder="models/image_encoder",
+            torch_dtype=dtype,
+        ).to(device)
 
-def edit_demo(source_image, source_prompt, edit_prompt, ipa_scale, guidance_scale, sharpening_factor, use_negative_prompt):
+    # Get both inversion and inference (editing) pipelines.
+    pipe_inversion, pipe_inference = get_pipes(cfg, image_encoder=image_encoder, device=device)
+    pipe_inversion.cfg = cfg
+    pipe_inference.cfg = cfg
+    
+    return cfg, pipe_inversion, pipe_inference, device, dtype, seed
+
+def edit_demo(source_image, source_prompt, edit_prompt, ipa_scale, guidance_scale, sharpening_factor, use_negative_prompt, cfg, pipe_inversion, pipe_inference, weight_name, device, seed):
     """
     Given a source image, a source prompt and an edit prompt, this function:
       1. Preprocesses the image.
@@ -65,9 +80,9 @@ def edit_demo(source_image, source_prompt, edit_prompt, ipa_scale, guidance_scal
     if source_image is None:
         return None
 
-    pipe_inversion, pipe_inference = get_pipes(cfg, image_encoder=image_encoder, device=device)
-    pipe_inversion.cfg = cfg
-    pipe_inference.cfg = cfg
+    # pipe_inversion, pipe_inference = get_pipes(cfg, image_encoder=image_encoder, device=device)
+    # pipe_inversion.cfg = cfg
+    # pipe_inference.cfg = cfg
 
     # Preprocess the source image: convert to RGB and crop/resize
     input_image = source_image.convert("RGB")
@@ -186,25 +201,40 @@ def edit_demo(source_image, source_prompt, edit_prompt, ipa_scale, guidance_scal
 
     return edited_image
 
-# Your custom inputs
-source_image = Image.open("juliana.jpg")
-source_prompt = "a girl in a red coat looks into the distance"
-edit_prompt = "a girl with a red hat"
-ipa_scale = 0.4
-guidance_scale = 7.5
-sharpening_factor = 1.0
-use_negative_prompt = False
+def main(): 
+    # Define IP-Adapter weights file for later loading - allows diffusion models to condition on images rather 
+    # than just text prompts 
+    weight_name = "ip-adapter-plus_sdxl_vit-h.safetensors"
+    cfg, pipe_inversion, pipe_inference, device, dtype, seed = setup_env()
+    
+    # Your custom inputs
+    source_image = Image.open("juliana.jpg")
+    source_prompt = "a girl in a red coat looks into the distance"
+    edit_prompt = "a girl with a red hat"
+    ipa_scale = 0.7
+    guidance_scale = 5
+    sharpening_factor = 1.0
+    use_negative_prompt = False
 
-# Call the edit function directly
-result_image = edit_demo(
-    source_image, 
-    source_prompt, 
-    edit_prompt, 
-    ipa_scale, 
-    guidance_scale, 
-    sharpening_factor, 
-    use_negative_prompt
-)
+    # Call the edit function directly
+    result_image = edit_demo(
+        source_image, 
+        source_prompt, 
+        edit_prompt, 
+        ipa_scale, 
+        guidance_scale, 
+        sharpening_factor, 
+        use_negative_prompt,
+        cfg, 
+        pipe_inversion,
+        pipe_inference, 
+        weight_name, 
+        device, 
+        seed
+    )
 
-# Save or display the result
-result_image.save("output_edited_image.jpg")
+    # Save or display the result
+    result_image.save("output_edited_image.jpg")
+
+if __name__=="__main__": 
+    main() 
